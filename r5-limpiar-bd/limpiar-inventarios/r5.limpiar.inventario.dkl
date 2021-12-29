@@ -1,19 +1,17 @@
-#include "dkli.dkh"
+﻿#include "dkli.dkh"
 
 #!
 program
 {
 	#include "functions.dkh"
-	// #include "funciones.dkl"
 	#include "serialize.dkh"
 	#include "dbr.dkh"
-	@cantidad_minima=0.001 //Cantidad mínima significativa de mercancía
 
-	
+	@cantidad_minima=0.001 //Cantidad mínima significativa de mercancía
 
 	obt_categoria_inventario::&db
 	{
-		return 4
+		return 4	//Clave primaria de categoría predeterminada (Movimientos extraordinarios)
 	}
 
 	LimpiarInventarioFecha::&db,f
@@ -35,6 +33,7 @@ program
 
 		for i=0;i<@count(query)
 		{
+			do print("Resumiendo producto "+str(i) + " de " + @count(query))
 			ref fila=@item(query,i)
 
 			params<"IProducto">:@@(fila,"IProducto")
@@ -94,7 +93,7 @@ program
 				 		@"auditado":0
 				 		@"cargos":@@(params,"saldo")
 				 		@"contabilizado":0
-				 		@"cpromedio":@@(params,"saldo")/@@(params,"existencia")
+				 		@"cpromedio": (@@(params,"saldo")/@@(params,"existencia"))
 				 		@"entradas":@@(params,"existencia")
 				 		@"referencia":uuid_dcardex
 				 		@"resto":@@(params,"existencia")
@@ -110,30 +109,36 @@ program
 					do dbr.insert(db,"dcardex",dcardex)
 				}
 			do dbr.commit(db)
+
 			exception
 			{
 				do print(last_error())
 				do dbr.rollback(db)
 			}
 		}
-		return "Operacion exitosa"
-			
+
 	}
 
-	bd=field.dstr(commandline(":"),"-bd","1")
-	if bd=="1"{
-		do print("Hace falta su Conexion a la base de datos")
+	bdq=field.dstr(commandline(":"),"-bd","")
+	f=field.dstr(commandline("="),"-f","")
+
+	if bdq==""
+	{
+		do print("Hace falta su conexión a la base de datos")
 		return
 	}
-	ref db=dbr.open(bd)
-	f=field.dstr(commandline("="),"-f","1")
-	
-	if f=="1"{
-		do print("hace falta la fecha de corte")
+
+	if f==""
+	{
+		do print("Hace falta la fecha de corte")
 		return
 	}
+
+	ref db=dbr.open(bdq)
+
 	do print("***")
-	do print(LimpiarInventarioFecha(db,f))
+	do LimpiarInventarioFecha(db,f)
+	do print("Operación completada")
 	do print("***")
 
 
