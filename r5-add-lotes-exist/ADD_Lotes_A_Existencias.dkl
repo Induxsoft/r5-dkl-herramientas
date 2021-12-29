@@ -1,0 +1,102 @@
+#include "dkli.dkh"
+#!
+program
+{
+       #include "functions.dkh"
+       #include "dbr.dkh"
+       ref dbmxc = dbr.open("MiConexion@MaxiComercio.R5")
+        @lexistencias="SELECT p.costopromedio as costopromedio,e.existencia as existencias,e.saldo as saldo,e.ialmacen as ialmacen,e.fk_producto_iexistencias as fk_producto_iexistencias,di.TCambio as TCambio FROM producto p inner join existencias e on p.sys_pk=e.FK_Producto_IExistencias inner join divisa di on p.IDivisa=di.sys_pk where p.iclase=4"
+        do dbr.execute(dbmxc,"update producto set ReqLote=1 where IClase=4",@null)
+        do dbr.execute(dbmxc,"delete from docf_ddocumento",@null)
+        do dbr.execute(dbmxc,"delete from docf_historialstatus",@null)
+        do dbr.execute(dbmxc,"delete from docf_documento",@null)
+        do dbr.execute(dbmxc,"delete from dcapa",@null)
+        do dbr.execute(dbmxc,"delete from dcardex",@null)
+        do dbr.execute(dbmxc,"delete from cardex",@null)
+        ref filas = dbr.table(dbmxc,@lexistencias,@null)
+     
+        for x=0; x<table.rows(filas)
+	{
+                     
+              ref fila=row.get(filas,x)
+              ex=field.num(fila,"existencias")
+              saldoa=field.num(fila,"Saldo")
+              pkAlm=field.num(fila,"ialmacen")
+              tipocam=field.num(fila,"TCambio")
+              costopr=field.num(fila,"costopromedio")
+              fkpkpro=field.num(fila,"fk_producto_iexistencias")
+               if  (ex>0)  
+               {      
+                          do dbr.begin(dbmxc)
+                                   using insreglote
+		                     {
+                                          @"Sys_TimeStamp*": dbr.sql("now()")
+                                          @"Sys_GUID": UUID()
+                                          @"Sys_DTCreated*": dbr.sql("now()")                                   
+                                          @"Sys_Exported": 0
+                                          @"Sys_DTExported*": dbr.sql("now()")
+                                          @"Entradas": ex
+                                          @"Existencia": ex
+                                          @"FCaducidad*": dbr.sql("DATE_ADD(now(), INTERVAL 6 MONTH)")
+                                          @"FEntrada*": dbr.sql("now()")
+                                          @"Numero": UUID()
+                                          @"IProducto": fkpkpro
+                                          @"sys_recver": 0
+       	                     }
+                                        do dbr.insert(dbmxc, "lote",insreglote) 
+                                  using inslotexalmacen
+					{
+                                          @"Sys_TimeStamp*":dbr.sql("now()")
+                                          @"Sys_GUID": UUID()
+                                          @"Sys_DTCreated*": dbr.sql("now()")
+                                          @"Sys_Exported": 0
+                                          @"Sys_DTExported*": dbr.sql("now()")
+                                          @"Cantidad": ex
+                                          @"IAlmacen": pkAlm
+                                          @"FK_Lote_ExisXAlmacen": dbr.num(dbmxc,"select sys_pk from lote where numero=@Numero",insreglote)
+                                          @"sys_recver": 0                                    						
+					}
+                                          do dbr.insert(dbmxc, "clotexalmacen",inslotexalmacen)
+                                    using inscardex
+					{
+                                          @"Sys_TimeStamp*":dbr.sql("now()")
+                                          @"Sys_GUID": UUID()
+                                          @"Sys_DTCreated*": dbr.sql("now()")
+                                          @"Sys_Exported": 0
+                                          @"Sys_DTExported*": dbr.sql("now()")
+                                          @"Aplicado": 1
+                                          @"Descripcion": "Lote Automatico"+str(x)
+                                          @"Fecha*": dbr.sql("date(now())")
+                                          @"Referencia":  "Movimiento00"+str(x)                                  						
+                                          @"Valuado":1 
+                                          @"ICategoria":4 
+                               	}
+                                          do dbr.insert(dbmxc, "cardex",inscardex)
+                                   using insdcardex
+                                   {
+                                          @"Sys_TimeStamp*":dbr.sql("now()")
+                                          @"Sys_GUID": UUID()
+                                          @"Sys_DTCreated*": dbr.sql("now()")
+                                          @"Sys_Exported": 0
+                                          @"Sys_DTExported*": dbr.sql("now()")
+                                          @"Abonos": 0
+                                          @"Auditado": 0
+                                          @"Cargos":saldoa
+                                          @"Contabilizado": 0
+                                          @"CPromedio":costopr
+                                          @"Entradas": ex
+                                          @"Resto": ex
+                                          @"Salidas": 0
+                                          @"TipoCambio":tipocam
+                                          @"Valuado": 0
+                                          @"IAlmacen": pkAlm
+                                          @"ILote": dbr.num(dbmxc,"select sys_pk from lote where numero=@Numero",insreglote)
+                                          @"IProducto": fkpkpro
+                                          @"FK_Cardex_Movimientos": dbr.num(dbmxc,"select sys_pk from cardex where Sys_guid=@Sys_Guid",inscardex)                              						
+					} 
+                                          do dbr.insert(dbmxc, "dcardex",insdcardex)
+                      do dbr.commit(dbmxc)
+              }
+	}
+      do dbr.close(dbmxc)     
+}
