@@ -1,0 +1,191 @@
+﻿#include "dkli.dkh"
+
+#!
+module "r5.cleaner.dkl"
+{
+	
+	// generarReferencia::&db
+	// {
+	// 	return dbr.str(db,"select (if(count(*)>=1,CONCAT('F',LPAD(Cast(count(*)+1 as CHAR),'9','0')),'F00000001')) as Codigo from cardex where cardex.Referencia like 'F%';",@null)
+	// }
+
+	// si alguna fila de compra esta relacionado con cardex,dcardex ¿que procede?
+	//es necesario eliminar sus relaciones con cardex,dcardex
+	limpiarComprasFecha::&db,f
+	{
+		//limpiar Documentos
+		new params{
+			@"fecha":f
+		}
+		do dbr.execute(db,"DELETE dcompra.* FROM dcompra INNER JOIN compra ON dcompra.FK_Compra_Detalle=compra.Sys_PK WHERE compra.Fecha<=@fecha",params)
+		do dbr.execute(db,"DELETE FROM compra WHERE compra.Fecha<=@fecha",params)
+		 return "Compras fue limpiada Exitosamente"
+	}
+	// si alguna fila de venta esta relacionado con cardex,dcardex ¿que procede?
+	// es necesario eliminar sus relaciones con cardex,dcardex
+	limpiarVentasFecha::&db,f
+	{
+		new params{
+			@"fecha":f
+		}
+		do dbr.execute(db,"DELETE dorden.* FROM dorden INNER JOIN orden ON orden.Sys_PK=dorden.FK_Orden_Detalle WHERE orden.Fecha<=@fecha",params)
+		do dbr.execute(db,"DELETE FROM orden WHERE orden.Fecha<=@fecha",params)
+		do dbr.execute(db,"DELETE dventa.* FROM dventa INNER JOIN venta ON venta.Sys_PK=dventa.FK_Venta_Detalle WHERE venta.Fecha<=@fecha",params)
+		do dbr.execute(db,"DELETE ut_cfd.* FROM ut_cfd INNER JOIN venta ON venta.Sys_PK=ut_cfd.uf_IVenta WHERE venta.Fecha<=@fecha;",params)
+		do dbr.execute(db,"DELETE FROM venta WHERE venta.Fecha<=@fecha",params)
+		return "Ventas fue limpiada Exitosamente"
+	}	
+	// para poder limpiar movcaja se necesita primero lipiar sus auxiliares
+	// despues limpiar movcaja 
+	// si es necesario, limpiar corte
+	limpiarMovCajasFecha::&db,f
+	{
+		new params{
+			@"fecha":f
+		}
+		ref venta=dbr.table(db,"SELECT mc.Sys_PK movcaja FROM movcaja mc inner JOIN venta v ON v.IMovCaja=mc.Sys_PK WHERE mc.Fecha<=@fecha",params)
+		for i=0;i<@count(venta){
+			ref fila=@item(venta,i)
+			params<"idmovcaja">:@@(fila,"movcaja")
+			do dbr.begin(db)
+				do dbr.execute(db,"UPDATE movcaja SET movcaja.Sys_Info='No' WHERE movcaja.Sys_PK=@idmovcaja",params)
+			do dbr.commit(db)
+			exception{
+				do print(last_error())
+				do dbr.rollback(db)
+			}
+		}
+		ref query=dbr.table(db,"SELECT c.Sys_PK icorte ,mc.Sys_PK imovcaja FROM movcaja mc INNER JOIN corte c ON c.Sys_PK=mc.ICorte
+								WHERE mc.Fecha<=@fecha AND mc.Sys_Info IS null;",params)
+
+		for i=0;i<@count(query){
+			ref fila=@item(query,i)
+			params<"icorte">:@@(fila,"icorte")
+			// params<"iventa">:@@(fila,"iventa")
+			params<"imovcaja">:@@(fila,"imovcaja")
+			do dbr.begin(db)
+				do dbr.execute(db,"DELETE FROM movcaja WHERE Sys_Info is null and Fecha<=@fecha",params)
+				do dbr.execute(db,"DELETE corte.* FROM corte INNER JOIN movcaja ON movcaja.ICorte=corte.Sys_PK WHERE corte.Sys_PK=@icorte AND movcaja.Sys_Info is null and movcaja.Fecha<=@fecha",params)
+
+			do dbr.commit(db)
+
+			exception{
+				do print(last_error())
+				do dbr.rollback(db)
+			}
+		}
+		return "Caja Limpiada Correctamente"
+	}
+	limpiarcxc::&db
+	{
+		ref cxc=dbr.table(db,"SELECT dc.ICliente,SUM(dc.Haber- dc.Debe) saldo,dc.IVenta,dc.Documento 
+								FROM dcxc dc GROUP BY dc.ICliente",@null)
+		// do dbr.delete(db,"cxc","",@null)
+
+		for i=0;i<@count(cxc)
+		{
+			ref fila=@item(cxc,i)
+
+			new params{
+			@"icliente":@@(fila,"ICliente")
+			}
+			do dbr.begin(db)
+			do dbr.execute(db,"DELETE FROM dcxc where ICliente=@icliente",params)
+
+			using dcxc
+			{
+				@"sys_pk":0
+				@"sys_recver":0
+				@"sys_timestamp*":dbr.sql("now()")
+				@"sys_Guid":UUID()
+				@"aplicable":1
+				@"Aplicacion*":dbr.sql("date(now())")
+				@"Auditado":0
+				// @"baseCM":field.num(fila,"baseCM")
+				// @"bonificaciones":field.num(fila,"bonificaciones")
+				@"Documento":@@(fila,"Documento")
+				@"contabilizado":0
+				@"debe":field.num(fila,"saldo")
+				@"fecha*":dbr.sql("date(now())")
+				@"FUltMoratorios*":dbr.sql("date(now())")
+				@"haber":0
+				// @"IntFinancieros":field.num(fila,"intfinancieros")
+				// @"IntMoratorios":field.num(fila,"intmoratorios")
+				// @"notas":@@(fila,"notas")
+				// @"pagos":field.num(fila,"pagos")
+				// @"Partida":@@(fila,"Partida")
+				// @"Poliza":@@(fila,"Poliza")
+				// @"porImpuestoCap":field.num(fila,"porImpuestoCap")
+				// @"porImpuestoFin":field.num(fila,"porImpuestoFin")
+				// @"porImpuestoMor":field.num(fila,"porImpuestoMor")
+				@"referencia":UUID()
+				// @"RelacionadoA":field.num(fila,"RelacionadoA")
+				// @"TasaMoratorios":field.num(fila,"TasaMoratorios")
+				@"TipoCambio":1
+				// @"XAplicar":@@(fila,"XAplicar")
+				@"icliente":@@(fila,"icliente")
+				
+			}
+			
+			do dbr.insert(db,"dcxc",dcxc)
+			do dbr.commit(db)
+
+			exception
+			{
+				do print(last_error())
+				do dbr.rollback(db)
+			}
+		}
+		return "dcxc fue limpiada Exitosamente"
+	}
+	limpiarCxp::&db
+	{
+		ref cxp=dbr.table(db,"SELECT dc.IProveedor,SUM(dc.Haber- dc.Debe) saldo,dc.ICompra,dc.Documento FROM dcxp dc GROUP BY dc.IProveedor",@null)
+
+		for i=0;i<@count(cxp){
+			ref fila=@item(cxp,i)
+			new params{
+			@"IProveedor":@@(fila,"IProveedor")
+			}
+			do dbr.begin(db)
+			do dbr.execute(db,"delete from dcxp where IProveedor=@IProveedor",params)
+
+			using dcxp{
+				@"sys_pk":0
+				@"sys_recver":0
+				@"sys_timestamp*":dbr.sql("now()")
+				@"sys_Guid":UUID()
+				@"aplicable":1
+				@"Aplicacion*":dbr.sql("date(now())")
+				@"Auditado":0
+				// @"baseCM":field.num(fila,"baseCM")
+				// @"bonificaciones":field.num(fila,"bonificaciones")
+				@"Documento":@@(fila,"Documento")
+				@"contabilizado":0
+				@"debe":field.num(fila,"saldo")
+				@"fecha*":dbr.sql("date(now())")
+				@"FUltMoratorios*":dbr.sql("date(now())")
+				@"haber":0
+				@"referencia":UUID()
+				// @"RelacionadoA":@@(fila,"RelacionadoA")
+				// @"TasaMoratorios":@@(fila,"TasaMoratorios")
+				// @"TipoCambio":@@(fila,"TipoCambio")
+				// @"XAplicar":@@(fila,"XAplicar")
+				@"IProveedor":@@(fila,"IProveedor")
+			}
+			// if parse.num(@@(fila,"IProveedor"))>0
+			// 	cxp<"IProveedor">:@@(fila,"IProveedor")
+			
+			do dbr.insert(db,"dcxp",dcxp)
+			do dbr.commit(db)
+
+			exception
+			{
+				do print(last_error())
+				do dbr.rollback(db)
+			}
+		}
+		
+		return "dcxp fue limpiada Exitosamente"
+	}
+}
