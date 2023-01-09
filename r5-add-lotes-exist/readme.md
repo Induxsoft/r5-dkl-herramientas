@@ -1,4 +1,4 @@
-La herramienta ADD_Lotes_A_Existencias.dkl realiza las siguientes transacciones:
+# La herramienta ADD_Lotes_A_Existencias.dkl realiza las siguientes transacciones:
 
 - Activa en todos los articulos el requerimiento de Lotes.
 - Elimina registros del historial de requisiciones, tablas: docf_ddocumento,docf_historialstatus,docf_documento.
@@ -18,7 +18,7 @@ Para ejecutar la herramienta realice lo siguiente:
 	a). Acceda a la ubicacion del interprete ubicado en: C:\ProgramData\induxsoft\machine\winShell\v10
         b). Ejecute la herramienta .DKL con el interprete indicando su ubicacion.
 		Ejemplo: C:\ProgramData\induxsoft\machine\winShell\v10\Devkron.exe c:\Micarpeta\ADD_Lotes_A_Existencias.dkl	
-	c). El proceso iniciara y espere a que finalice, no cierre ni cancele, ya que puede causar daños irreversibles en la Base de datos.
+	c). El proceso iniciara y espere a que finalice, no cierre ni cancele, ya que puede causar daÃ±os irreversibles en la Base de datos.
 
 Una vez finalizada todos los articulos con existencias tendran un Lote con fecha de caducidad 6 Meses despues de la ejecucion de la herramienta.
 
