@@ -5,11 +5,11 @@ Que nos da la funcionalidad de eliminar los datos de las tablas de inventarios
 De la base de datos del cliente, de acuerdo a una fecha dada como parámetro e inserta datos 
 después de haber eliminado los datos de las tablas inventarios de  acuerdo al producto y almacén que corresponden al producto.
 
-Ejemplo:
-Parámetros:
+Parámetros de línea de comando:
+```
 -bd: miConexion@Maxicomercio.R5   //referencia a la base de datos
 -f=20211228   o 2021-12-28   //fecha de corte
-
+```
 
 ## Ejecutar la herramienta
 1. abrimos la consola de devkron
