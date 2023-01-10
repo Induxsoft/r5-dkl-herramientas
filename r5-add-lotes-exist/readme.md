@@ -1,4 +1,4 @@
-# Herramienta ADD_Lotes_A_Existencias.
+# Herramienta ADD_Lotes_A_Existencias.Dkl
 Esta herramienta permite que TODOS los articulos de una BD R5 sean marcados para agregar lotes y aplica de manera automatica lotes a todos aquellos articulos que tienen existencias.
 ## La herramienta ADD_Lotes_A_Existencias.dkl realiza las siguientes transacciones:
 
