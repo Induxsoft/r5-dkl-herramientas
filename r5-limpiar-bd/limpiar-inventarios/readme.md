@@ -20,7 +20,7 @@ Parámetros de línea de comando:
 	 ```
 	 devkron \miubicacion\r5.limpiar.inventariov20.dkl -bd:miConexion@Maxicomercio.R5 -f=2021-12-28
 	 ```
-4. si todo es correcto mandara un mensaje
+4. si todo es correcto el proceso se optimización comenzará.
  ```
  Nota: Cuando el proceso inicie espere a que finalice, no cierre ni cancele, ya que puede causar daños irreversibles en la Base de datos. 
  ```
