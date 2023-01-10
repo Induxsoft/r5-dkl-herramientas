@@ -1,13 +1,14 @@
-# r5.limpiar.inventario.dkl
+# Herramienta r5.limpiar.inventario.dkl
 
-La herramienta r5.limpiar.inventario es una aplicación para sistemas R5  eliminar los datos de las tablas de inventarios 
-De la base de datos del cliente, de acuerdo a una fecha dada como parámetro e inserta datos 
-después de haber eliminado los datos de las tablas inventarios de  acuerdo al producto y almacén que corresponden al producto.
+Esta herramienta permite optimizar información del módulo de inventarios en una base de datos R5; utilice esta herramienta cuando tenga  mucha información de inventarios de años atrás y que no utiliza el sistema para las transacciones actuales.
+
+La herramienta recopila  todas las existencias por productos y por almacén guardando la información para un historial, después procede a eliminar todos los movimientos de inventarios desde el origen de los tiempos a una fecha indicada como parámetro.
+
 
 Parámetros de línea de comando:
 ```
--bd: miConexion@Maxicomercio.R5   //referencia a la base de datos
--f=20211228   o 2021-12-28   //fecha de corte
+-bd: miConexion@Maxicomercio.R5   //conexion a la base de datos
+-f= 2021-12-28   //fecha de final(Desde el origen de los tiempos a la fecha final).
 ```
 
 ## Ejecutar la herramienta
