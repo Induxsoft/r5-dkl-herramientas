@@ -1,4 +1,6 @@
-# La herramienta ADD_Lotes_A_Existencias.dkl realiza las siguientes transacciones:
+# Herramienta ADD_Lotes_A_Existencias.
+Esta herramienta permite que TODOS nuestros articulos sean marcados para agregar lotes y aplica lotes a todos auqellos articulos que tienen existencias.
+## La herramienta ADD_Lotes_A_Existencias.dkl realiza las siguientes transacciones:
 
 - Activa en todos los articulos el requerimiento de Lotes.
 - Elimina registros del historial de requisiciones, tablas: docf_ddocumento,docf_historialstatus,docf_documento.
