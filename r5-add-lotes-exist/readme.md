@@ -10,13 +10,13 @@ Esta herramienta permite que TODOS los articulos de una BD R5 sean marcados para
 
 ### Para ejecutar la herramienta realice lo siguiente:
 1. Descargue la herramienta y coloquela en una ubicacion.
-2. Instalar el interprete de Lenguaje DKL de induxsoft de distribucion gratuita Devkron Language de la siguiente forma:
+2. Instalar el interprete de Lenguaje DKL de induxsoft de distribucion gratuita Devkron Language.
 3. Establecer el nombre de nuestra conexion a la base de datos R5 en la herramienta:
 	- Abrir el archivo ADD_Lotes_A_Existencias.dkl con un editor de texto (Visual Code,NotePad++ etc.)
 	- Modificar en "MiConexion@MaxiComercio.R5" por el nombre de nuestra conexion a la BD.
            	ejemplo: dbr.open("ferretera2000@MaxiComercio.R5") 
 	- Guarde y cierre.
-4. Ejecute la herramienta desde el CMD de windows con el interprete de Lenguaje: Devkron.exe
+4. Ejecute la herramienta desde el CMD de windows con el interprete de Lenguaje Devkron.exe  de la siguiente forma:
 	- Acceda a la ubicacion del interprete ubicado en: C:\ProgramData\induxsoft\machine\winShell\v10
         - Ejecute la herramienta .DKL con el interprete indicando su ubicacion.
 		Ejemplo: C:\ProgramData\induxsoft\machine\winShell\v10\Devkron.exe c:\Micarpeta\ADD_Lotes_A_Existencias.dkl	
