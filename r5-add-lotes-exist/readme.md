@@ -8,7 +8,7 @@ Esta herramienta permite que TODOS los articulos de una BD R5 sean marcados para
   - Al ejecutar esta herramienta ya NO tendra disponible el historial de movimientos(entradas/salidas) y de requisiciones desde la  fecha de ejecucion de la herramienta hacia atras.
 - Agrega Lotes a los Articulos que tengan existencias.
 
-Para ejecutar la herramienta realice lo siguiente:
+### Para ejecutar la herramienta realice lo siguiente:
 1. Descargue la herramienta y coloquela en una ubicacion.
 2. Instalar el interprete de Lenguaje DKL de induxsoft de distribucion gratuita Devkron Language de la siguiente forma:
 3. Establecer el nombre de nuestra conexion a la base de datos R5 en la herramienta:
