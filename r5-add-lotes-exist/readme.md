@@ -5,7 +5,7 @@ Esta herramienta permite que TODOS los articulos de una BD R5 sean marcados para
 - Activa en todos los articulos el requerimiento de Lotes.
 - Elimina registros del historial de requisiciones, tablas: docf_ddocumento,docf_historialstatus,docf_documento.
 - Elimina los registros de Movimientos(Entradas/Salidas) en las tablas: Cardex,DCardex,DCapa.
-  -Al ejecutar esta herramienta ya NO tendra disponible el historial de movimientos(entradas/salidas) y de requisiciones desde la  fecha de ejecucion de la herramienta hacia atras.
+  - Al ejecutar esta herramienta ya NO tendra disponible el historial de movimientos(entradas/salidas) y de requisiciones desde la  fecha de ejecucion de la herramienta hacia atras.
 - Agrega Lotes a los Articulos que tengan existencias.
 
 Para ejecutar la herramienta realice lo siguiente:
