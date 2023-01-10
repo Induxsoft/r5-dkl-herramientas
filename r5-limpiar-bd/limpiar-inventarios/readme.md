@@ -1,7 +1,6 @@
 # r5.limpiar.inventario.dkl
 
-El r5.limpiar.inventario es una herramienta para la aplicación maxiComercio
-Que nos da la funcionalidad de eliminar los datos de las tablas de inventarios 
+La herramienta r5.limpiar.inventario es una aplicación para sistemas R5  eliminar los datos de las tablas de inventarios 
 De la base de datos del cliente, de acuerdo a una fecha dada como parámetro e inserta datos 
 después de haber eliminado los datos de las tablas inventarios de  acuerdo al producto y almacén que corresponden al producto.
 
