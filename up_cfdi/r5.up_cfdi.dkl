@@ -1,0 +1,221 @@
+#include "dkli.dkh"
+#!
+module
+{
+    module ":cfdi"
+    {
+        prefix::&elemento
+        {
+            return list.str(split(@@(elemento,"name"),":"),0)
+        }
+
+        attr::&elemento,attrname
+        {
+            return @@(@@(elemento,"&attributes"),attrname)
+        }
+
+        nodes::&elemento
+        {
+            return @@(elemento,"&nodes")
+        }
+
+        attributes::&elemento
+        {
+            return @@(elemento,"&attributes")
+        }
+
+        getElementByTagName::&elemento,tagname
+        {
+            ref nodes = @@(elemento,"&nodes")
+            if isnull(nodes) { return @null }
+
+            for i = 0; i < @count(nodes); i+1
+            {
+                ref el = @item(nodes,i)
+
+                if @@(el,"name") == tagname { return el }
+            }
+
+            return @null
+        }
+    }
+
+    program ""
+    {
+        #include "functions.dkh"
+        #include "serialize.dkh"
+        #include "dbr.dkh"
+        
+        do errordet(@false)
+        //inicio del programa
+        ref args=commandline("=")
+
+        if trim(@@(args,"$db"))==""{do rise_error(-99,"No se ha indicado una base de datos")}
+        if trim(@@(args,"$cfdi"))==""{do rise_error(-99,"No se ha indicado la ruta del cfdi")}
+        if trim(@@(args,"$ref"))==""{do rise_error(-99,"No se ha indicado una referencia a la venta")}
+
+        if not(file.exists(@@(args,"$cfdi"))){do rise_error(-99,"No se encontró el cfdi indicado.")}
+
+        ref db=dbr.open(@@(args,"$db"))
+        xml=file.rtext(@@(args,"$cfdi"))
+
+        ref cfdi=parse.xmlStr(xml)
+
+        //obetenemos los nodos necesarios
+        ref comprobante=cfdi//cfdi.getElementByTagName(cfdi,"cfdi:Comprobante")
+        ref complemento=cfdi.getElementByTagName(cfdi,"cfdi:Complemento")
+        ref timbre_fiscal=cfdi.getElementByTagName(complemento,"tfd:TimbreFiscalDigital")
+        ref receptor=cfdi.getElementByTagName(cfdi,"cfdi:Receptor")
+        ref emisor=cfdi.getElementByTagName(cfdi,"cfdi:Emisor")
+
+        //obtenemos los atributos necesarios
+        tipo_doc=cfdi.attr(comprobante,"$TipoDeComprobante")
+        total_doc=cfdi.attr(comprobante,"#Total")
+        uuid_doc=cfdi.attr(timbre_fiscal,"$UUID")
+        rfc_receptor=cfdi.attr(receptor,"$Rfc")
+        rfc_emisor=cfdi.attr(emisor,"$Rfc")
+        uf_nocertificadosat=cfdi.attr(timbre_fiscal,"$NoCertificadoSAT")
+        uf_fechahoracersat=cfdi.attr(timbre_fiscal,"$FechaTimbrado")
+        no_certificado=cfdi.attr(comprobante,"$NoCertificado")
+
+        if tolower(tipo_doc)=="p"
+        {
+            ref pagos=cfdi.getElementByTagName(complemento,"pago20:Pagos")
+            ref totales=cfdi.getElementByTagName(pagos,"pago20:Totales")
+            total_doc=cfdi.attr(totales,"#MontoTotalPagos")
+        }
+        if total_doc < 1{do rise_error(-99,"El total del cfdi no puede ser 0")}
+
+        total_mns=total_doc - 0.5
+        total_mas=total_doc + 0.5
+        
+        if trim(uuid_doc)==""{do rise_error(-99,"El cfdi no ha sido timbrado.")}
+        if trim(uf_fechahoracersat)==""{do rise_error(-99,"No se pudo obtener la fecha de timbrado del cfdi")}
+
+        using args
+        {
+            @"tipo_doc":tipo_doc
+            @"total_doc":total_doc
+            @"uuid_doc":uuid_doc
+            @"total_mns":total_mns
+            @"total_mas":total_mas
+            @"rfc_receptor":rfc_receptor
+            @"rfc_emisor":rfc_emisor
+            @"no_certificado":no_certificado
+        }
+        //verificar si existe el certificado
+        certificado=dbr.num(db,"SELECT sys_pk FROM ut_cfdinfo u WHERE u.uf_noCertificado=@no_certificado ",args)
+        //verificamos si existe en ut_cfd
+        exist_uuid=dbr.num(db,"select count(*) from ut_cfd where uf_foliosat=@uuid_doc",args)
+        if exist_uuid> 0{do rise_error(-99,"El cfdi ya se encuentra registrado")}
+
+        //verficar cliente -receptor
+        cliente=dbr.num(db,"select sys_pk from cliente where rfc=@rfc_receptor",args)
+        if cliente < 1{do rise_error(-99,"No se encontró el receptor.")}
+        
+        //obtener venta
+        venta =dbr.num(db,"SELECT
+                                sys_pk
+                            from
+                                venta v
+                            WHERE
+                                v.referencia = @ref
+                                AND (
+                                    (v.subtotal + v.impuesto1 + v.impuesto2 + v.impuesto3 + v.impuesto4) - (v.descuento1 + v.descuento2)
+                                ) 
+                                BETWEEN @total_mns
+                                AND @total_mas",args)
+      
+        pk_dcxc= 0 
+        pk_apl_cxc= 0
+        if venta< 1
+        {
+            //verificar en dcxc por si se trata de una referencia de recibo o venta
+            // IFNULL(cxc.debe,0) + IFNULL(cxc.intmoratorios,0) - IFNULL(cxc.pagos,0) - IFNULL(cxc.bonificaciones,0)
+            // IFNULL(cxc.haber,0) + IFNULL(cxp.intmoratorios,0) - IFNULL(cxp.pagos,0) - IFNULL(cxp.bonificaciones,0)
+
+            if tolower(tipo_doc)=="p"
+            {
+                ref dcxc=dbr.rec(db,"SELECT 
+                    sys_pk,d.debe,d.haber
+                    FROM dcxc d 
+                    WHERE d.referencia=@ref
+                    AND 
+                    (d.haber between @total_mns AND @total_mas)",args)
+
+                ref apli_cxc=dbr.rec(db,"SELECT a.sys_pk,a.aplicadoa,cxc.iventa 
+                        from aplcxc a 
+                        INNER JOIN dcxc cxc ON a.AplicadoA=cxc.Sys_PK
+                        WHERE a.FK_DCxC_AplicadoA=@sys_pk;",dcxc)
+                
+                pk_dcxc= @@(dcxc,"#sys_pk")
+                pk_apl_cxc=@@(apli_cxc,"#sys_pk")
+
+                venta=@@(apli_cxc,"#iventa")
+
+            }
+        }
+        if venta< 1{do rise_error(-99,"No se encontró la venta indicada")}
+
+        new ut_cfd
+        {
+            @"sys_guid":toupper(uuid())
+            // @"sys_dtcreated*":now()
+            @"sys_timestamp*":now()
+            @"sys_recver": 0
+            @"uf_rfc_emisor":rfc_emisor
+            @"uf_foliosat":uuid_doc
+            @"uf_nocertificadosat":uf_nocertificadosat
+            @"uf_fechahoracersat":uf_fechahoracersat
+            @"uf_tipo" : 3
+            @"uf_fechahora*":now()
+            @"uf_iventa":venta
+            @"uf_xml":uuid()
+            @"uf_cadenaoriginal":""
+            @"uf_sellodigital":cfdi.attr(comprobante,"$Sello")
+            @"uf_sellodigitalsat":cfdi.attr(timbre_fiscal,"$SelloCFD")
+        }
+        if certificado> 0 {ut_cfd<"uf_cfdi_info">:certificado}
+
+        if tipo_doc=="I" || tipo_doc=="E"
+        {
+            do dbr.insert(db,"ut_cfd",ut_cfd)
+
+            do print("(*-*) Datos del cfdi insertado con éxito")
+        }
+        else if tipo_doc=="P"
+        {
+            args<"venta">:@@(ut_cfd,"#uf_iventa")
+            
+            if pk_dcxc== 0 || pk_apl_cxc== 0{do rise_error(-99,"No se encontró datos de cxc con base a la referencia indicado.")}
+            
+            using ut_cfd
+            {
+                @"uf_idcxc": pk_dcxc
+                @"uf_aplcxc": pk_apl_cxc
+                @"uf_tipo": 2
+            }
+
+            do dbr.begin(db)
+
+                do dbr.insert(db,"ut_cfd",ut_cfd)
+                ut_cfd<"pk_dcxc">:pk_dcxc
+                res=dbr.execute(db,"update aplcxc set uf_cfdi=@uf_foliosat where fk_dcxc_aplicadoa=@pk_dcxc and (ifnull(uf_cfdi,'')='' or ifnull(uf_cfdi,'')='0') ",ut_cfd)
+                if not(res){do rise_error(-99,"No se realizó la operación al intentar actualizar la fila aplicada.")}
+
+                do print("(*-*) Datos del cfdi insertado con éxito")
+
+            do dbr.commit(db)
+            
+            exception
+            {
+                if dbr.in_transaction(db){do dbr.rollback(db)}
+                do print(last_error())
+            }
+        }
+        else 
+        {
+            do rise_error(-99,"Operación no implementada para el tipo de documento")
+        }
+    }
+}

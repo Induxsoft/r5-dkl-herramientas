@@ -1,0 +1,1 @@
+./dkl r5.up_cfdi.dkl "db=nombre cualificado hacia una base de datos(qname)" "cfdi=ruta del archivo cfdi(xml)" "ref=Referencia de la factura o del recibo"
