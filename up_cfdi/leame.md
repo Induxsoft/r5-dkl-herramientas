@@ -10,9 +10,13 @@
 <p>
 <b>db=</b> Conexión a la base de datos R5.<br>
 <b>cfdi=</b> Ruta y archivo XML de CFDi.<br>
-<b>ref=</b> Ruta y archivo XML de CFDi.<br> 
+<b>ref=</b> Referencia del documento de venta, nota de crédito o pago.<br> 
 </p>
-  
+|Parámetro|Descripción|Tipo|
+|db|Conexión a la base de datos R5.|Requerido|
+|cfdi|Ruta y archivo XML de CFDi.|Requerido|
+|ref|Referencia del documento de venta, nota de crédito o pago.|Requerido|
+
 ## Ejemplo:
 <p>
   ./dkl <b>r5.up_cfdi.dkl db=</b>pruebaxmlfallo@MaxiComercio.R5 <b>cfdi=</b>C:\dklprod\mifactura.XML<b> ref=</b>F00000001</b><br>
