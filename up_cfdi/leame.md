@@ -13,6 +13,7 @@
 <b>ref=</b> Referencia del documento de venta, nota de crédito o pago.<br> 
 </p>
 |Parámetro|Descripción|Tipo|
+|---------|-----------|----|
 |db|Conexión a la base de datos R5.|Requerido|
 |cfdi|Ruta y archivo XML de CFDi.|Requerido|
 |ref|Referencia del documento de venta, nota de crédito o pago.|Requerido|
