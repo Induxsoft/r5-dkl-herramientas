@@ -11,9 +11,7 @@
 <b>db=</b> Conexión a la base de datos R5.<br>
 <b>cfdi=</b> Ruta y archivo XML de CFDi.<br>
 <b>ref=</b> Referencia del documento de venta, nota de crédito o pago.<br> 
-|col1|col2|
-|----|----|
-|fi01|fi02|
+
 
 ## Ejemplo:
 <p>
