@@ -9,8 +9,8 @@
 ## Parámetros.
 <p>
 <b>db=<b/> Conexión a la base de datos R5.<br>
-<b>cfdi<b/> Ruta y archivo XML de CFDi.<br>
-<b>ref<b/> Ruta y archivo XML de CFDi.<br> 
+<b>cfdi</b>b> Ruta y archivo XML de CFDi.<br>
+<b>ref</b> Ruta y archivo XML de CFDi.<br> 
 </p>
   
 ## Ejemplo:
