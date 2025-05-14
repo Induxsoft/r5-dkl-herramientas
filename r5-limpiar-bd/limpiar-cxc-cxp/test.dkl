@@ -1,0 +1,33 @@
+#include "dkli.dkh"
+#!
+program ""
+{
+    // #include "r5.eliminar.cxc.dkl"
+    // #include "r5.eliminar.cxp.dkl"
+
+    qn = "prueba@localhost"
+    ff = "2023-12-31"
+    
+    ref db = dbr.open(qn)
+    do dbr.begin(db)
+
+    // do DeterminarDocumentosAEliminar(db,ff)
+    // do ConsolidarDocumentos(db)
+    // do EliminarDocumentos(db)
+    
+    // do RecalcularSaldosClientes(db)
+    // do RecalcularSaldosProveedores(db)
+
+    // do Truncate(db,ff)
+
+    do dbr.commit(db)
+    exception
+    {
+        if isset("db")
+        {
+            if dbr.in_transaction(db){ do dbr.rollback(db) }
+            do dbr.close(db)
+        }
+        do print(last_error())
+    }
+}
